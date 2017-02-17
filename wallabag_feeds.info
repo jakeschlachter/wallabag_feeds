@@ -1,0 +1,9 @@
+name = Wallabag Feeds Fetcher
+description = Fetches feeds from a walabag api
+package = Feeds
+dependencies[] = feeds
+dependencies[] = wallabag_api
+core = 7.x
+files[] = wallabag_feeds_fetcher.inc
+files[] = wallabag_feeds_parser.inc
+

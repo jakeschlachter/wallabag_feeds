@@ -1,0 +1,41 @@
+<?php
+
+/**
+ * @file
+ *   Feeds directory fetcher module, fetches files from a directory.
+ */
+
+/**
+ * Implementation of hook_feeds_plugins().
+ */
+function wallabag_feeds_feeds_plugins() {
+  $info = array();
+  $info['wallabag_feeds_fetcher'] = array(
+    'name' => 'Wallabag Feeds Fetcher',
+    'description' => 'Fetches feeds from a walabag api.',
+    'handler' => array(
+      'parent' => 'FeedsFetcher', // A plugin needs to derive either directly or indirectly from FeedsFetcher, FeedsParser or FeedsProcessor.
+      'class' => 'WallabagFeedsFetcher',
+      'file' => 'wallabag_feeds_fetcher.inc',
+      'path' => drupal_get_path('module', 'wallabag_feeds'),
+    ),
+  );
+  $info['wallabag_feeds_parser'] = array(
+    'name' => 'Wallabag Feeds Parser',
+    'description' => 'Parses results from a wallabag api fetcher.',
+    'handler' => array(
+      'parent' => 'FeedsParser', // A plugin needs to derive either directly or indirectly from FeedsFetcher, FeedsParser or FeedsProcessor.
+      'class' => 'WallabagFeedsParser',
+      'file' => 'wallabag_feeds_parser.inc',
+      'path' => drupal_get_path('module', 'wallabag_feeds'),
+    ),
+  );  
+  return $info;
+}
+
+function wallabag_feeds_ctools_plugin_api($owner, $api) {
+  if ($owner == 'feeds' && $api == 'plugins') {
+    return array('version' => 1);
+  }
+}
+
