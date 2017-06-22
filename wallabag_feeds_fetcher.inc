@@ -110,14 +110,35 @@ class WallabagFeedsFetcher extends FeedsFetcher {
       
     $wallabagFetcherResult = new WallabagFetcherResult($wallabagApi, $this->config['updated_content']);
     
-    if ($state->next) {
+    if (isset($state->next) && $state->next) {
       //we are batching so grab the next content
       $wallabagFetcherResult->pullNextPage($state->next);
     }    
     else {
       // If we're not batching, scan for new or updated content.
       $wallabagFetcherResult->pullNextSince($source_config['wallabag_last']);
+      
+      //check if the content was just created. We want to give the mallabag admin time to
+      // tag the content.
+      $raw = $wallabagFetcherResult->getRaw();
+      if (isset($raw->_embedded->items)) {
+        $num = sizeof($raw->_embedded->items);
+        if ($num > 0) {
+          //DateTime should properly deal with timezone issues between wallabag and local server.
+          //the created_at string has timezone info
+          $post_date = new DateTime($raw->_embedded->items[$num - 1]->created_at);
+          $current = new DateTime();
+          $dif = date_diff($current, $post_date);
+          $dif_sec = $current->getTimestamp() - $post_date->getTimestamp();
+          
+          if ($dif_sec < $source_config['wallabag_wait_sec']) {
+            return new FeedsFetcherResult(null);
+          }
+        }
+      }      
     }
+    
+
    
     $total = $wallabagFetcherResult->getPages();
     $page = $wallabagFetcherResult->getPage();
@@ -185,6 +206,13 @@ class WallabagFeedsFetcher extends FeedsFetcher {
       '#default_value' => (isset($source_config['wallabag_user_password']) && !empty($source_config['wallabag_user_password'])) ? $source_config['wallabag_user_password'] : '',
       '#required' => TRUE,
     ); 
+    $form['wallabag_wait_sec'] = array(
+       '#type' => 'textfield',
+       '#title' => t('Seconds to wait before import.'),
+       '#description' => t("Specify the nuber of sec to give the wallabag user to tag a post before it is pulled."),
+       '#default_value' => (isset($source_config['wallabag_wait_sec'])) ? $source_config['wallabag_wait_sec'] : '120',
+       '#required' => TRUE,
+     );            
     
     $form['reset'] = array(
       '#type' => 'checkbox',
